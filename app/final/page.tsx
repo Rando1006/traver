@@ -109,14 +109,14 @@ export default function FinalPage() {
 
               <div className="timeline">
                 {group.items.map((item) => (
-                  <article className="timeline-item compact-card" key={item.id}>
+                  <article className={`timeline-item compact-card family-row family-${item.familyId}`} key={item.id}>
                     <div className="timeline-time">
                       <Clock3 size={16} />
                       {formatTimeRange(item)}
                     </div>
                     <div className="final-content">
                       <div className="final-title-row">
-                        <span className="family-badge">{item.familyName}</span>
+                        <span className={`family-badge family-${item.familyId}`}>{item.familyName}</span>
                         <div className="card-title">
                           <h3>{item.title}</h3>
                           <p>

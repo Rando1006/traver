@@ -255,7 +255,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell family-theme-${activeFamilyId ?? 1}`}>
       <header className="topbar">
         <div className="brand">
           <div className="brand-mark" aria-hidden="true">
@@ -284,7 +284,7 @@ export default function HomePage() {
           <div className="family-tabs" role="tablist" aria-label="選擇家庭">
             {families.map((family) => (
               <button
-                className={`family-tab ${family.id === activeFamilyId ? "active" : ""}`}
+                className={`family-tab family-${family.id} ${family.id === activeFamilyId ? "active" : ""}`}
                 key={family.id}
                 onClick={() => {
                   setActiveFamilyId(family.id);
@@ -462,7 +462,12 @@ export default function HomePage() {
 
                 <div className="item-list compact-list">
                   {group.items.map((item) => (
-                    <article className={`itinerary-card compact-card ${item.isFinal ? "final" : ""}`} key={item.id}>
+                    <article
+                      className={`itinerary-card compact-card family-row family-${item.familyId} ${
+                        item.isFinal ? "final" : ""
+                      }`}
+                      key={item.id}
+                    >
                       <div className="compact-time">
                         <Clock3 size={15} />
                         {formatTimeRange(item)}

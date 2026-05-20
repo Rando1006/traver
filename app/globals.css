@@ -9,6 +9,11 @@
   --primary-dark: #164f4a;
   --accent: #bf5b2c;
   --accent-soft: #f6dfd2;
+  --family-color: #1f6f68;
+  --family-dark: #164f4a;
+  --family-soft: #e2f1ee;
+  --family-ink: #0f504a;
+  --family-line: rgba(31, 111, 104, 0.42);
   --success: #2f7d4f;
   --danger: #b84242;
   --shadow: 0 18px 44px rgba(50, 46, 37, 0.1);
@@ -50,6 +55,36 @@ a {
 .app-shell {
   min-height: 100vh;
   padding: 28px clamp(16px, 4vw, 48px) 56px;
+}
+
+.family-theme-1 {
+  --primary: #1f6f68;
+  --primary-dark: #164f4a;
+  --family-color: #1f6f68;
+  --family-dark: #164f4a;
+  --family-soft: #e2f1ee;
+  --family-ink: #0f504a;
+  --family-line: rgba(31, 111, 104, 0.42);
+}
+
+.family-theme-2 {
+  --primary: #b65c2e;
+  --primary-dark: #884421;
+  --family-color: #b65c2e;
+  --family-dark: #884421;
+  --family-soft: #f8e2d4;
+  --family-ink: #713817;
+  --family-line: rgba(182, 92, 46, 0.42);
+}
+
+.family-theme-3 {
+  --primary: #4f63b6;
+  --primary-dark: #34427c;
+  --family-color: #4f63b6;
+  --family-dark: #34427c;
+  --family-soft: #e7ebfb;
+  --family-ink: #2e3a78;
+  --family-line: rgba(79, 99, 182, 0.42);
 }
 
 .topbar {
@@ -138,18 +173,46 @@ a {
 }
 
 .family-tab {
+  position: relative;
   min-height: 42px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   color: var(--muted);
   font-weight: 700;
+  overflow: hidden;
+}
+
+.family-tab::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background: var(--tab-color);
+  content: "";
+}
+
+.family-tab.family-1 {
+  --tab-color: #1f6f68;
+}
+
+.family-tab.family-2 {
+  --tab-color: #b65c2e;
+}
+
+.family-tab.family-3 {
+  --tab-color: #4f63b6;
 }
 
 .family-tab.active {
-  border-color: var(--primary);
-  background: var(--primary);
+  border-color: var(--family-color);
+  background: var(--family-color);
   color: white;
+}
+
+.family-tab.active::before {
+  background: rgba(255, 255, 255, 0.58);
 }
 
 .form {
@@ -170,7 +233,7 @@ a {
 }
 
 .field label {
-  color: var(--muted);
+  color: var(--family-ink);
   font-size: 13px;
   font-weight: 700;
 }
@@ -201,7 +264,7 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--muted);
+  color: var(--family-ink);
   font-weight: 700;
 }
 
@@ -331,6 +394,7 @@ a {
 
 .day-group-header h3 {
   margin: 2px 0 0;
+  color: var(--family-ink);
   font-size: 18px;
 }
 
@@ -362,8 +426,36 @@ a {
 }
 
 .itinerary-card.final {
-  border-color: rgba(31, 111, 104, 0.42);
-  background: linear-gradient(90deg, rgba(31, 111, 104, 0.08), #fff 22%);
+  border-color: var(--family-line);
+  background: linear-gradient(90deg, var(--family-soft), #fff 22%);
+}
+
+.family-row {
+  border-left: 5px solid var(--family-color);
+}
+
+.family-row.family-1 {
+  --family-color: #1f6f68;
+  --family-dark: #164f4a;
+  --family-soft: #e2f1ee;
+  --family-ink: #0f504a;
+  --family-line: rgba(31, 111, 104, 0.42);
+}
+
+.family-row.family-2 {
+  --family-color: #b65c2e;
+  --family-dark: #884421;
+  --family-soft: #f8e2d4;
+  --family-ink: #713817;
+  --family-line: rgba(182, 92, 46, 0.42);
+}
+
+.family-row.family-3 {
+  --family-color: #4f63b6;
+  --family-dark: #34427c;
+  --family-soft: #e7ebfb;
+  --family-ink: #2e3a78;
+  --family-line: rgba(79, 99, 182, 0.42);
 }
 
 .card-head {
@@ -428,7 +520,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--primary);
+  color: var(--family-ink);
   font-size: 13px;
   font-weight: 900;
   line-height: 1.2;
@@ -524,7 +616,7 @@ a {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--primary);
+  color: var(--family-ink);
   font-size: 13px;
   font-weight: 900;
   line-height: 1.2;
@@ -560,11 +652,26 @@ a {
   width: fit-content;
   min-height: 24px;
   border-radius: 8px;
-  background: var(--accent-soft);
-  color: #874018;
+  background: var(--family-soft);
+  color: var(--family-ink);
   padding: 0 8px;
   font-size: 12px;
   font-weight: 800;
+}
+
+.family-badge.family-1 {
+  --family-soft: #e2f1ee;
+  --family-ink: #0f504a;
+}
+
+.family-badge.family-2 {
+  --family-soft: #f8e2d4;
+  --family-ink: #713817;
+}
+
+.family-badge.family-3 {
+  --family-soft: #e7ebfb;
+  --family-ink: #2e3a78;
 }
 
 .loading {
