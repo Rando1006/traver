@@ -307,17 +307,17 @@ a {
 
 .day-list {
   display: grid;
-  gap: 12px;
-  padding: 18px;
+  gap: 10px;
+  padding: 14px;
 }
 
 .day-group {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.78);
-  padding: 14px;
+  padding: 12px;
 }
 
 .day-group-header {
@@ -326,12 +326,12 @@ a {
   justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
+  padding-bottom: 8px;
 }
 
 .day-group-header h3 {
-  margin: 3px 0 0;
-  font-size: 20px;
+  margin: 2px 0 0;
+  font-size: 18px;
 }
 
 .day-group-header > span {
@@ -340,15 +340,9 @@ a {
   font-weight: 800;
 }
 
-.day-label {
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 900;
-}
-
 .item-list {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .itinerary-card {
@@ -360,9 +354,16 @@ a {
   padding: 16px;
 }
 
+.compact-card {
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+}
+
 .itinerary-card.final {
   border-color: rgba(31, 111, 104, 0.42);
-  background: linear-gradient(90deg, rgba(31, 111, 104, 0.08), #fff 34%);
+  background: linear-gradient(90deg, rgba(31, 111, 104, 0.08), #fff 22%);
 }
 
 .card-head {
@@ -374,13 +375,17 @@ a {
 
 .card-title h3 {
   margin: 0;
-  font-size: 18px;
-  line-height: 1.35;
+  font-size: 15px;
+  line-height: 1.25;
 }
 
 .card-title p {
-  margin: 5px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 3px 0 0;
   color: var(--muted);
+  font-size: 13px;
 }
 
 .inline-link {
@@ -419,6 +424,57 @@ a {
   font-size: 13px;
 }
 
+.compact-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.compact-content {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.compact-note {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.compact-side {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.compact-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: max-content;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.compact-final {
+  min-height: 34px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
 .card-text {
   margin: 0;
   color: var(--text);
@@ -451,25 +507,28 @@ a {
 .timeline {
   position: relative;
   display: grid;
-  gap: 14px;
+  gap: 8px;
 }
 
 .timeline-item {
   display: grid;
-  grid-template-columns: 130px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
-  padding: 16px;
+  padding: 9px 10px;
 }
 
 .timeline-time {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: var(--primary);
+  font-size: 13px;
   font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .final-panel {
@@ -479,8 +538,15 @@ a {
 
 .final-content {
   display: grid;
-  gap: 12px;
+  gap: 3px;
   min-width: 0;
+}
+
+.final-title-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 10px;
 }
 
 .timeline-date {
@@ -492,12 +558,12 @@ a {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  min-height: 28px;
+  min-height: 24px;
   border-radius: 8px;
   background: var(--accent-soft);
   color: #874018;
-  padding: 0 9px;
-  font-size: 13px;
+  padding: 0 8px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -518,6 +584,23 @@ a {
 
   .meta-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compact-card {
+    grid-template-columns: 86px minmax(0, 1fr);
+  }
+
+  .compact-side {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+
+  .final-title-row {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+
+  .final-title-row .compact-cost {
+    grid-column: 2;
   }
 }
 
@@ -550,6 +633,14 @@ a {
   .meta-grid,
   .timeline-item {
     grid-template-columns: 1fr;
+  }
+
+  .compact-card {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-side {
+    grid-column: auto;
   }
 
   .card-head {

@@ -455,66 +455,61 @@ export default function HomePage() {
               <section className="day-group" key={group.date}>
                 <div className="day-group-header">
                   <div>
-                    <span className="day-label">同一天行程</span>
                     <h3>{group.date}</h3>
                   </div>
                   <span>{group.items.length} 筆</span>
                 </div>
 
-                <div className="item-list">
+                <div className="item-list compact-list">
                   {group.items.map((item) => (
-                    <article className={`itinerary-card ${item.isFinal ? "final" : ""}`} key={item.id}>
-                      <div className="card-head">
+                    <article className={`itinerary-card compact-card ${item.isFinal ? "final" : ""}`} key={item.id}>
+                      <div className="compact-time">
+                        <Clock3 size={15} />
+                        {formatTimeRange(item)}
+                      </div>
+
+                      <div className="compact-content">
                         <div className="card-title">
                           <h3>{item.title}</h3>
-                          <p>{renderLocation(item)}</p>
+                          <p>
+                            <MapPin size={14} />
+                            {renderLocation(item)}
+                          </p>
                         </div>
-                        <div className="card-actions">
-                          <button
-                            className="button icon-only secondary"
-                            title="編輯"
-                            type="button"
-                            onClick={() => startEditing(item)}
-                          >
-                            <Edit3 size={17} />
-                          </button>
-                          <button
-                            className="button icon-only danger"
-                            title="刪除"
-                            type="button"
-                            onClick={() => removeItem(item)}
-                          >
-                            <Trash2 size={17} />
-                          </button>
-                        </div>
+
+                        {item.description || item.notes ? (
+                          <p className="compact-note">{[item.description, item.notes].filter(Boolean).join(" / ")}</p>
+                        ) : null}
                       </div>
 
-                      <div className="meta-grid">
-                        <span className="meta">
-                          <Clock3 size={15} />
-                          {formatTimeRange(item)}
-                        </span>
-                        <span className="meta">
-                          <MapPin size={15} />
-                          {renderLocation(item)}
-                        </span>
-                        <span className="meta">
-                          <DollarSign size={15} />
+                      <div className="compact-side">
+                        <span className="compact-cost">
+                          <DollarSign size={14} />
                           {formatCost(item.estimatedCost)}
                         </span>
-                      </div>
-
-                      {item.description ? <p className="card-text">{item.description}</p> : null}
-                      {item.notes ? <div className="card-notes">{item.notes}</div> : null}
-
-                      <div className="button-row">
                         <button
-                          className={`button ${item.isFinal ? "secondary" : "primary"}`}
+                          className={`button compact-final ${item.isFinal ? "secondary" : "primary"}`}
                           onClick={() => toggleFinal(item)}
                           type="button"
                         >
                           <CheckCircle2 size={18} />
-                          {item.isFinal ? "已在 final，點擊移出" : "加入 final"}
+                          {item.isFinal ? "移出 final" : "加 final"}
+                        </button>
+                        <button
+                          className="button icon-only secondary"
+                          title="編輯"
+                          type="button"
+                          onClick={() => startEditing(item)}
+                        >
+                          <Edit3 size={17} />
+                        </button>
+                        <button
+                          className="button icon-only danger"
+                          title="刪除"
+                          type="button"
+                          onClick={() => removeItem(item)}
+                        >
+                          <Trash2 size={17} />
                         </button>
                       </div>
                     </article>

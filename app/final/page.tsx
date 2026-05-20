@@ -102,7 +102,6 @@ export default function FinalPage() {
             <section className="day-group" key={group.date}>
               <div className="day-group-header">
                 <div>
-                  <span className="day-label">同一天 final 行程</span>
                   <h3>{group.date}</h3>
                 </div>
                 <span>{group.items.length} 筆</span>
@@ -110,29 +109,29 @@ export default function FinalPage() {
 
               <div className="timeline">
                 {group.items.map((item) => (
-                  <article className="timeline-item" key={item.id}>
+                  <article className="timeline-item compact-card" key={item.id}>
                     <div className="timeline-time">
                       <Clock3 size={16} />
                       {formatTimeRange(item)}
                     </div>
                     <div className="final-content">
-                      <span className="family-badge">{item.familyName}</span>
-                      <div className="card-title">
-                        <h3>{item.title}</h3>
-                        <p>{renderLocation(item)}</p>
-                      </div>
-                      <div className="meta-grid">
-                        <span className="meta">
-                          <MapPin size={15} />
-                          {renderLocation(item)}
-                        </span>
-                        <span className="meta">
-                          <DollarSign size={15} />
+                      <div className="final-title-row">
+                        <span className="family-badge">{item.familyName}</span>
+                        <div className="card-title">
+                          <h3>{item.title}</h3>
+                          <p>
+                            <MapPin size={14} />
+                            {renderLocation(item)}
+                          </p>
+                        </div>
+                        <span className="compact-cost">
+                          <DollarSign size={14} />
                           {formatCost(item.estimatedCost)}
                         </span>
                       </div>
-                      {item.description ? <p className="card-text">{item.description}</p> : null}
-                      {item.notes ? <div className="card-notes">{item.notes}</div> : null}
+                      {item.description || item.notes ? (
+                        <p className="compact-note">{[item.description, item.notes].filter(Boolean).join(" / ")}</p>
+                      ) : null}
                     </div>
                   </article>
                 ))}
