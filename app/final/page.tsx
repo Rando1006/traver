@@ -1,27 +1,34 @@
 "use client";
 
-import { ArrowLeft, CalendarDays, Clock3, DollarSign, Flag, MapPin, Plane } from "lucide-react";
+import { ArrowLeft, Clock3, DollarSign, ExternalLink, Flag, MapPin, Plane } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type FinalItem = {
   id: number;
   familyId: number;
   familyName: string;
   date: string;
-  startTime: string;
+  startTime: string | null;
   endTime: string | null;
   title: string;
   location: string;
+  mapUrl: string | null;
   description: string;
   estimatedCost: string | null;
   notes: string;
+};
+
+type DateGroup = {
+  date: string;
+  items: FinalItem[];
 };
 
 export default function FinalPage() {
   const [items, setItems] = useState<FinalItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const groupedItems = useMemo(() => groupByDate(items), [items]);
 
   useEffect(() => {
     async function loadFinal() {
@@ -56,7 +63,7 @@ export default function FinalPage() {
           </div>
           <div>
             <h1>Final 行程</h1>
-            <p>所有家庭已加入 final 的活動，依日期與時間排序。</p>
+            <p>所有家庭已加入 final 的活動，依日期分組並按時間排序。</p>
           </div>
         </div>
         <nav className="nav-actions" aria-label="主要導覽">
@@ -90,40 +97,47 @@ export default function FinalPage() {
           </div>
         ) : null}
 
-        <div className={`timeline ${isLoading ? "loading" : ""}`}>
-          {items.map((item) => (
-            <article className="timeline-item" key={item.id}>
-              <div>
-                <div className="timeline-date">{item.date}</div>
-                <div className="meta" style={{ marginTop: 8 }}>
-                  <Clock3 size={15} />
-                  {formatTimeRange(item)}
+        <div className={`day-list ${isLoading ? "loading" : ""}`}>
+          {groupedItems.map((group) => (
+            <section className="day-group" key={group.date}>
+              <div className="day-group-header">
+                <div>
+                  <span className="day-label">同一天 final 行程</span>
+                  <h3>{group.date}</h3>
                 </div>
+                <span>{group.items.length} 筆</span>
               </div>
-              <div className="final-content">
-                <span className="family-badge">{item.familyName}</span>
-                <div className="card-title">
-                  <h3>{item.title}</h3>
-                  <p>{item.location}</p>
-                </div>
-                <div className="meta-grid">
-                  <span className="meta">
-                    <CalendarDays size={15} />
-                    {item.date}
-                  </span>
-                  <span className="meta">
-                    <MapPin size={15} />
-                    {item.location}
-                  </span>
-                  <span className="meta">
-                    <DollarSign size={15} />
-                    {formatCost(item.estimatedCost)}
-                  </span>
-                </div>
-                {item.description ? <p className="card-text">{item.description}</p> : null}
-                {item.notes ? <div className="card-notes">{item.notes}</div> : null}
+
+              <div className="timeline">
+                {group.items.map((item) => (
+                  <article className="timeline-item" key={item.id}>
+                    <div className="timeline-time">
+                      <Clock3 size={16} />
+                      {formatTimeRange(item)}
+                    </div>
+                    <div className="final-content">
+                      <span className="family-badge">{item.familyName}</span>
+                      <div className="card-title">
+                        <h3>{item.title}</h3>
+                        <p>{renderLocation(item)}</p>
+                      </div>
+                      <div className="meta-grid">
+                        <span className="meta">
+                          <MapPin size={15} />
+                          {renderLocation(item)}
+                        </span>
+                        <span className="meta">
+                          <DollarSign size={15} />
+                          {formatCost(item.estimatedCost)}
+                        </span>
+                      </div>
+                      {item.description ? <p className="card-text">{item.description}</p> : null}
+                      {item.notes ? <div className="card-notes">{item.notes}</div> : null}
+                    </div>
+                  </article>
+                ))}
               </div>
-            </article>
+            </section>
           ))}
         </div>
       </section>
@@ -131,7 +145,36 @@ export default function FinalPage() {
   );
 }
 
+function groupByDate(items: FinalItem[]): DateGroup[] {
+  const groups = new Map<string, FinalItem[]>();
+
+  for (const item of items) {
+    const group = groups.get(item.date) ?? [];
+    group.push(item);
+    groups.set(item.date, group);
+  }
+
+  return Array.from(groups, ([date, groupedItems]) => ({ date, items: groupedItems }));
+}
+
+function renderLocation(item: FinalItem) {
+  if (!item.mapUrl) {
+    return item.location;
+  }
+
+  return (
+    <a className="inline-link" href={item.mapUrl} rel="noreferrer" target="_blank">
+      {item.location}
+      <ExternalLink size={13} />
+    </a>
+  );
+}
+
 function formatTimeRange(item: FinalItem) {
+  if (!item.startTime) {
+    return "未填時間";
+  }
+
   const start = item.startTime.slice(0, 5);
   const end = item.endTime?.slice(0, 5);
   return end ? `${start} - ${end}` : start;

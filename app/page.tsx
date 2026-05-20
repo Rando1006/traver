@@ -6,6 +6,7 @@ import {
   Clock3,
   DollarSign,
   Edit3,
+  ExternalLink,
   FilePlus2,
   Flag,
   MapPin,
@@ -26,10 +27,11 @@ type ItineraryItem = {
   id: number;
   familyId: number;
   date: string;
-  startTime: string;
+  startTime: string | null;
   endTime: string | null;
   title: string;
   location: string;
+  mapUrl: string | null;
   description: string;
   estimatedCost: string | null;
   notes: string;
@@ -43,10 +45,16 @@ type FormState = {
   endTime: string;
   title: string;
   location: string;
+  mapUrl: string;
   description: string;
   estimatedCost: string;
   notes: string;
   isFinal: boolean;
+};
+
+type DateGroup = {
+  date: string;
+  items: ItineraryItem[];
 };
 
 const emptyForm: FormState = {
@@ -55,6 +63,7 @@ const emptyForm: FormState = {
   endTime: "",
   title: "",
   location: "",
+  mapUrl: "",
   description: "",
   estimatedCost: "",
   notes: "",
@@ -75,6 +84,7 @@ export default function HomePage() {
     () => families.find((family) => family.id === activeFamilyId) ?? null,
     [activeFamilyId, families],
   );
+  const groupedItems = useMemo(() => groupByDate(items), [items]);
 
   useEffect(() => {
     async function loadFamilies() {
@@ -137,10 +147,11 @@ export default function HomePage() {
     setEditingId(item.id);
     setForm({
       date: item.date,
-      startTime: item.startTime.slice(0, 5),
+      startTime: item.startTime?.slice(0, 5) ?? "",
       endTime: item.endTime?.slice(0, 5) ?? "",
       title: item.title,
       location: item.location,
+      mapUrl: item.mapUrl ?? "",
       description: item.description,
       estimatedCost: item.estimatedCost ?? "",
       notes: item.notes,
@@ -168,7 +179,9 @@ export default function HomePage() {
     const payload = {
       ...form,
       familyId: activeFamilyId,
+      startTime: form.startTime || null,
       endTime: form.endTime || null,
+      mapUrl: form.mapUrl || null,
       estimatedCost: form.estimatedCost || null,
     };
 
@@ -322,7 +335,6 @@ export default function HomePage() {
                 <label htmlFor="startTime">開始時間</label>
                 <input
                   id="startTime"
-                  required
                   type="time"
                   value={form.startTime}
                   onChange={(event) => updateField("startTime", event.target.value)}
@@ -358,6 +370,17 @@ export default function HomePage() {
                 required
                 value={form.location}
                 onChange={(event) => updateField("location", event.target.value)}
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="mapUrl">Google Map 連結</label>
+              <input
+                id="mapUrl"
+                placeholder="https://maps.app.goo.gl/..."
+                type="url"
+                value={form.mapUrl}
+                onChange={(event) => updateField("mapUrl", event.target.value)}
               />
             </div>
 
@@ -403,7 +426,9 @@ export default function HomePage() {
           <div className="list-toolbar">
             <div>
               <h2>{activeFamily?.name ?? "家庭行程"}</h2>
-              <p>{items.length} 筆候選行程，{items.filter((item) => item.isFinal).length} 筆已加入 final。</p>
+              <p>
+                {items.length} 筆候選行程，{items.filter((item) => item.isFinal).length} 筆已加入 final。
+              </p>
             </div>
             <button
               className="button secondary"
@@ -415,7 +440,7 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className={`item-list ${isLoading ? "loading" : ""}`}>
+          <div className={`day-list ${isLoading ? "loading" : ""}`}>
             {!isLoading && items.length === 0 ? (
               <div className="empty-state">
                 <div>
@@ -426,66 +451,76 @@ export default function HomePage() {
               </div>
             ) : null}
 
-            {items.map((item) => (
-              <article className={`itinerary-card ${item.isFinal ? "final" : ""}`} key={item.id}>
-                <div className="card-head">
-                  <div className="card-title">
-                    <h3>{item.title}</h3>
-                    <p>{item.location}</p>
+            {groupedItems.map((group) => (
+              <section className="day-group" key={group.date}>
+                <div className="day-group-header">
+                  <div>
+                    <span className="day-label">同一天行程</span>
+                    <h3>{group.date}</h3>
                   </div>
-                  <div className="card-actions">
-                    <button
-                      className="button icon-only secondary"
-                      title="編輯"
-                      type="button"
-                      onClick={() => startEditing(item)}
-                    >
-                      <Edit3 size={17} />
-                    </button>
-                    <button
-                      className="button icon-only danger"
-                      title="刪除"
-                      type="button"
-                      onClick={() => removeItem(item)}
-                    >
-                      <Trash2 size={17} />
-                    </button>
-                  </div>
+                  <span>{group.items.length} 筆</span>
                 </div>
 
-                <div className="meta-grid">
-                  <span className="meta">
-                    <CalendarDays size={15} />
-                    {item.date}
-                  </span>
-                  <span className="meta">
-                    <Clock3 size={15} />
-                    {formatTimeRange(item)}
-                  </span>
-                  <span className="meta">
-                    <MapPin size={15} />
-                    {item.location}
-                  </span>
-                  <span className="meta">
-                    <DollarSign size={15} />
-                    {formatCost(item.estimatedCost)}
-                  </span>
-                </div>
+                <div className="item-list">
+                  {group.items.map((item) => (
+                    <article className={`itinerary-card ${item.isFinal ? "final" : ""}`} key={item.id}>
+                      <div className="card-head">
+                        <div className="card-title">
+                          <h3>{item.title}</h3>
+                          <p>{renderLocation(item)}</p>
+                        </div>
+                        <div className="card-actions">
+                          <button
+                            className="button icon-only secondary"
+                            title="編輯"
+                            type="button"
+                            onClick={() => startEditing(item)}
+                          >
+                            <Edit3 size={17} />
+                          </button>
+                          <button
+                            className="button icon-only danger"
+                            title="刪除"
+                            type="button"
+                            onClick={() => removeItem(item)}
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        </div>
+                      </div>
 
-                {item.description ? <p className="card-text">{item.description}</p> : null}
-                {item.notes ? <div className="card-notes">{item.notes}</div> : null}
+                      <div className="meta-grid">
+                        <span className="meta">
+                          <Clock3 size={15} />
+                          {formatTimeRange(item)}
+                        </span>
+                        <span className="meta">
+                          <MapPin size={15} />
+                          {renderLocation(item)}
+                        </span>
+                        <span className="meta">
+                          <DollarSign size={15} />
+                          {formatCost(item.estimatedCost)}
+                        </span>
+                      </div>
 
-                <div className="button-row">
-                  <button
-                    className={`button ${item.isFinal ? "secondary" : "primary"}`}
-                    onClick={() => toggleFinal(item)}
-                    type="button"
-                  >
-                    <CheckCircle2 size={18} />
-                    {item.isFinal ? "已在 final，點擊移出" : "加入 final"}
-                  </button>
+                      {item.description ? <p className="card-text">{item.description}</p> : null}
+                      {item.notes ? <div className="card-notes">{item.notes}</div> : null}
+
+                      <div className="button-row">
+                        <button
+                          className={`button ${item.isFinal ? "secondary" : "primary"}`}
+                          onClick={() => toggleFinal(item)}
+                          type="button"
+                        >
+                          <CheckCircle2 size={18} />
+                          {item.isFinal ? "已在 final，點擊移出" : "加入 final"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
                 </div>
-              </article>
+              </section>
             ))}
           </div>
         </section>
@@ -494,7 +529,36 @@ export default function HomePage() {
   );
 }
 
+function groupByDate(items: ItineraryItem[]): DateGroup[] {
+  const groups = new Map<string, ItineraryItem[]>();
+
+  for (const item of items) {
+    const group = groups.get(item.date) ?? [];
+    group.push(item);
+    groups.set(item.date, group);
+  }
+
+  return Array.from(groups, ([date, groupedItems]) => ({ date, items: groupedItems }));
+}
+
+function renderLocation(item: ItineraryItem) {
+  if (!item.mapUrl) {
+    return item.location;
+  }
+
+  return (
+    <a className="inline-link" href={item.mapUrl} rel="noreferrer" target="_blank">
+      {item.location}
+      <ExternalLink size={13} />
+    </a>
+  );
+}
+
 function formatTimeRange(item: ItineraryItem) {
+  if (!item.startTime) {
+    return "未填時間";
+  }
+
   const start = item.startTime.slice(0, 5);
   const end = item.endTime?.slice(0, 5);
   return end ? `${start} - ${end}` : start;

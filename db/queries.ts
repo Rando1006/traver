@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "./index";
 import { families, itineraryItems, type NewItineraryItem } from "./schema";
@@ -14,7 +14,12 @@ export function listFamilyItinerary(familyId: number) {
     .select()
     .from(itineraryItems)
     .where(eq(itineraryItems.familyId, familyId))
-    .orderBy(asc(itineraryItems.date), asc(itineraryItems.startTime), asc(itineraryItems.sortOrder), asc(itineraryItems.id));
+    .orderBy(
+      asc(itineraryItems.date),
+      sql`${itineraryItems.startTime} asc nulls last`,
+      asc(itineraryItems.sortOrder),
+      asc(itineraryItems.id),
+    );
 }
 
 export function listFinalItinerary() {
@@ -29,6 +34,7 @@ export function listFinalItinerary() {
       endTime: itineraryItems.endTime,
       title: itineraryItems.title,
       location: itineraryItems.location,
+      mapUrl: itineraryItems.mapUrl,
       description: itineraryItems.description,
       estimatedCost: itineraryItems.estimatedCost,
       notes: itineraryItems.notes,
@@ -40,7 +46,12 @@ export function listFinalItinerary() {
     .from(itineraryItems)
     .innerJoin(families, eq(families.id, itineraryItems.familyId))
     .where(eq(itineraryItems.isFinal, true))
-    .orderBy(asc(itineraryItems.date), asc(itineraryItems.startTime), asc(itineraryItems.sortOrder), asc(itineraryItems.id));
+    .orderBy(
+      asc(itineraryItems.date),
+      sql`${itineraryItems.startTime} asc nulls last`,
+      asc(itineraryItems.sortOrder),
+      asc(itineraryItems.id),
+    );
 }
 
 export async function createItineraryItem(values: NewItineraryItem) {

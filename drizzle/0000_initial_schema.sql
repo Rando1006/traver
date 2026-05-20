@@ -8,10 +8,11 @@ CREATE TABLE IF NOT EXISTS "itinerary_items" (
   "id" serial PRIMARY KEY NOT NULL,
   "family_id" integer NOT NULL,
   "date" date NOT NULL,
-  "start_time" time NOT NULL,
+  "start_time" time,
   "end_time" time,
   "title" varchar(160) NOT NULL,
   "location" varchar(180) NOT NULL,
+  "map_url" text,
   "description" text DEFAULT '' NOT NULL,
   "estimated_cost" numeric(10, 2),
   "notes" text DEFAULT '' NOT NULL,
@@ -29,9 +30,9 @@ END $$;
 
 INSERT INTO "families" ("id", "name", "display_order")
 VALUES
-  (1, '家庭 A', 1),
-  (2, '家庭 B', 2),
-  (3, '家庭 C', 3)
+  (1, '樂沐家', 1),
+  (2, '小葵家', 2),
+  (3, '瓜峰家', 3)
 ON CONFLICT ("id") DO UPDATE
 SET "name" = EXCLUDED."name",
     "display_order" = EXCLUDED."display_order";

@@ -24,10 +24,11 @@ export const itineraryItems = pgTable("itinerary_items", {
     .notNull()
     .references(() => families.id, { onDelete: "cascade" }),
   date: date("date").notNull(),
-  startTime: time("start_time", { withTimezone: false }).notNull(),
+  startTime: time("start_time", { withTimezone: false }),
   endTime: time("end_time", { withTimezone: false }),
   title: varchar("title", { length: 160 }).notNull(),
   location: varchar("location", { length: 180 }).notNull(),
+  mapUrl: text("map_url"),
   description: text("description").notNull().default(""),
   estimatedCost: numeric("estimated_cost", { precision: 10, scale: 2 }),
   notes: text("notes").notNull().default(""),

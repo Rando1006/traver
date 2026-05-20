@@ -15,10 +15,11 @@ const blankToNull = (value: unknown) => {
 export const itineraryCreateSchema = z.object({
   familyId: z.coerce.number().int().positive(),
   date: z.string().regex(datePattern, "請選擇日期"),
-  startTime: z.string().regex(timePattern, "請填寫開始時間"),
+  startTime: z.preprocess(blankToNull, z.string().regex(timePattern, "請填寫正確的開始時間").nullable().optional()),
   endTime: z.preprocess(blankToNull, z.string().regex(timePattern, "請填寫正確的結束時間").nullable().optional()),
   title: z.string().trim().min(1, "請填寫活動名稱").max(160, "活動名稱不可超過 160 字"),
   location: z.string().trim().min(1, "請填寫地點").max(180, "地點不可超過 180 字"),
+  mapUrl: z.preprocess(blankToNull, z.string().url("請填寫有效的 Google Map 連結").nullable().optional()),
   description: z.string().trim().max(3000, "活動說明不可超過 3000 字").default(""),
   estimatedCost: z.preprocess(
     blankToNull,
