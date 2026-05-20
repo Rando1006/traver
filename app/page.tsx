@@ -301,7 +301,7 @@ export default function HomePage() {
             <Plane size={24} />
           </div>
           <div>
-            <h1>三家庭旅遊行程</h1>
+            <h1>福岡之旅</h1>
             <p>各家庭先整理自己的想法，再直接加入 final 行程。</p>
           </div>
         </div>
