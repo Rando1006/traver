@@ -1,0 +1,9 @@
+.env
+.env*.local
+.next
+.playwright-mcp
+node_modules
+dist
+drizzle/meta
+tsconfig.tsbuildinfo
+npm-debug.log*
