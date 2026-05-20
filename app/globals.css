@@ -368,6 +368,67 @@ a {
   color: var(--muted);
 }
 
+.date-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 14px;
+}
+
+.date-jump-list {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--family-ink);
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.date-chip:hover {
+  border-color: var(--family-line);
+  background: var(--family-soft);
+}
+
+.date-chip span {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.collapse-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.compact-control {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
 .day-list {
   display: grid;
   gap: 10px;
@@ -398,10 +459,30 @@ a {
   font-size: 18px;
 }
 
+.day-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--family-ink);
+  padding: 0;
+  text-align: left;
+}
+
+.day-toggle:hover h3 {
+  text-decoration: underline;
+}
+
 .day-group-header > span {
   color: var(--muted);
   font-size: 14px;
   font-weight: 800;
+}
+
+.day-group.collapsed {
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .item-list {
@@ -685,6 +766,11 @@ a {
     flex-direction: column;
   }
 
+  .date-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .main-grid {
     grid-template-columns: 1fr;
   }
@@ -748,6 +834,11 @@ a {
 
   .compact-side {
     grid-column: auto;
+  }
+
+  .collapse-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .card-head {

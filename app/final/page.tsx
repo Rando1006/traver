@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Clock3, DollarSign, ExternalLink, Flag, MapPin, Plane } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, Clock3, DollarSign, ExternalLink, Flag, MapPin, Plane } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -28,6 +28,7 @@ export default function FinalPage() {
   const [items, setItems] = useState<FinalItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
   const groupedItems = useMemo(() => groupByDate(items), [items]);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function FinalPage() {
         }
 
         setItems(payload);
+        setCollapsedDates(new Set());
       } catch (fetchError) {
         setError(fetchError instanceof Error ? fetchError.message : "Final 行程載入失敗");
       } finally {
@@ -53,6 +55,35 @@ export default function FinalPage() {
 
     loadFinal();
   }, []);
+
+  function toggleDate(date: string) {
+    setCollapsedDates((current) => {
+      const next = new Set(current);
+
+      if (next.has(date)) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+
+      return next;
+    });
+  }
+
+  function collapseAllDates() {
+    setCollapsedDates(new Set(groupedItems.map((group) => group.date)));
+  }
+
+  function expandAllDates() {
+    setCollapsedDates(new Set());
+  }
+
+  function scrollToDate(date: string) {
+    document.getElementById(`final-day-${toDateAnchor(date)}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
 
   return (
     <main className="app-shell">
@@ -97,45 +128,78 @@ export default function FinalPage() {
           </div>
         ) : null}
 
+        {groupedItems.length > 0 ? (
+          <div className="date-tools" aria-label="日期快速操作">
+            <div className="date-jump-list" aria-label="日期快速跳轉">
+              {groupedItems.map((group) => (
+                <button className="date-chip" key={group.date} onClick={() => scrollToDate(group.date)} type="button">
+                  {formatShortDate(group.date)}
+                  <span>{group.items.length}</span>
+                </button>
+              ))}
+            </div>
+            <div className="collapse-actions">
+              <button className="button secondary compact-control" onClick={expandAllDates} type="button">
+                全部展開
+              </button>
+              <button className="button secondary compact-control" onClick={collapseAllDates} type="button">
+                全部收合
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className={`day-list ${isLoading ? "loading" : ""}`}>
           {groupedItems.map((group) => (
-            <section className="day-group" key={group.date}>
+            <section
+              className={`day-group ${collapsedDates.has(group.date) ? "collapsed" : ""}`}
+              id={`final-day-${toDateAnchor(group.date)}`}
+              key={group.date}
+            >
               <div className="day-group-header">
-                <div>
+                <button
+                  aria-expanded={!collapsedDates.has(group.date)}
+                  className="day-toggle"
+                  onClick={() => toggleDate(group.date)}
+                  type="button"
+                >
+                  {collapsedDates.has(group.date) ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
                   <h3>{group.date}</h3>
-                </div>
+                </button>
                 <span>{group.items.length} 筆</span>
               </div>
 
-              <div className="timeline">
-                {group.items.map((item) => (
-                  <article className={`timeline-item compact-card family-row family-${item.familyId}`} key={item.id}>
-                    <div className="timeline-time">
-                      <Clock3 size={16} />
-                      {formatTimeRange(item)}
-                    </div>
-                    <div className="final-content">
-                      <div className="final-title-row">
-                        <span className={`family-badge family-${item.familyId}`}>{item.familyName}</span>
-                        <div className="card-title">
-                          <h3>{item.title}</h3>
-                          <p>
-                            <MapPin size={14} />
-                            {renderLocation(item)}
-                          </p>
-                        </div>
-                        <span className="compact-cost">
-                          <DollarSign size={14} />
-                          {formatCost(item.estimatedCost)}
-                        </span>
+              {!collapsedDates.has(group.date) ? (
+                <div className="timeline">
+                  {group.items.map((item) => (
+                    <article className={`timeline-item compact-card family-row family-${item.familyId}`} key={item.id}>
+                      <div className="timeline-time">
+                        <Clock3 size={16} />
+                        {formatTimeRange(item)}
                       </div>
-                      {item.description || item.notes ? (
-                        <p className="compact-note">{[item.description, item.notes].filter(Boolean).join(" / ")}</p>
-                      ) : null}
-                    </div>
-                  </article>
-                ))}
-              </div>
+                      <div className="final-content">
+                        <div className="final-title-row">
+                          <span className={`family-badge family-${item.familyId}`}>{item.familyName}</span>
+                          <div className="card-title">
+                            <h3>{item.title}</h3>
+                            <p>
+                              <MapPin size={14} />
+                              {renderLocation(item)}
+                            </p>
+                          </div>
+                          <span className="compact-cost">
+                            <DollarSign size={14} />
+                            {formatCost(item.estimatedCost)}
+                          </span>
+                        </div>
+                        {item.description || item.notes ? (
+                          <p className="compact-note">{[item.description, item.notes].filter(Boolean).join(" / ")}</p>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
             </section>
           ))}
         </div>
@@ -154,6 +218,15 @@ function groupByDate(items: FinalItem[]): DateGroup[] {
   }
 
   return Array.from(groups, ([date, groupedItems]) => ({ date, items: groupedItems }));
+}
+
+function toDateAnchor(date: string) {
+  return date.replaceAll("-", "");
+}
+
+function formatShortDate(date: string) {
+  const [, month, day] = date.split("-");
+  return `${Number(month)}/${Number(day)}`;
 }
 
 function renderLocation(item: FinalItem) {

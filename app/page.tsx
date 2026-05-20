@@ -3,6 +3,8 @@
 import {
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Clock3,
   DollarSign,
   Edit3,
@@ -79,6 +81,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
 
   const activeFamily = useMemo(
     () => families.find((family) => family.id === activeFamilyId) ?? null,
@@ -132,6 +135,7 @@ export default function HomePage() {
       }
 
       setItems(payload);
+      setCollapsedDates(new Set());
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "行程載入失敗" });
     } finally {
@@ -163,6 +167,35 @@ export default function HomePage() {
   function resetForm() {
     setEditingId(null);
     setForm(emptyForm);
+  }
+
+  function toggleDate(date: string) {
+    setCollapsedDates((current) => {
+      const next = new Set(current);
+
+      if (next.has(date)) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+
+      return next;
+    });
+  }
+
+  function collapseAllDates() {
+    setCollapsedDates(new Set(groupedItems.map((group) => group.date)));
+  }
+
+  function expandAllDates() {
+    setCollapsedDates(new Set());
+  }
+
+  function scrollToDate(date: string) {
+    document.getElementById(`family-day-${toDateAnchor(date)}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -289,6 +322,7 @@ export default function HomePage() {
                 onClick={() => {
                   setActiveFamilyId(family.id);
                   resetForm();
+                  setCollapsedDates(new Set());
                 }}
                 type="button"
               >
@@ -440,6 +474,27 @@ export default function HomePage() {
             </button>
           </div>
 
+          {groupedItems.length > 0 ? (
+            <div className="date-tools" aria-label="日期快速操作">
+              <div className="date-jump-list" aria-label="日期快速跳轉">
+                {groupedItems.map((group) => (
+                  <button className="date-chip" key={group.date} onClick={() => scrollToDate(group.date)} type="button">
+                    {formatShortDate(group.date)}
+                    <span>{group.items.length}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="collapse-actions">
+                <button className="button secondary compact-control" onClick={expandAllDates} type="button">
+                  全部展開
+                </button>
+                <button className="button secondary compact-control" onClick={collapseAllDates} type="button">
+                  全部收合
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <div className={`day-list ${isLoading ? "loading" : ""}`}>
             {!isLoading && items.length === 0 ? (
               <div className="empty-state">
@@ -452,74 +507,88 @@ export default function HomePage() {
             ) : null}
 
             {groupedItems.map((group) => (
-              <section className="day-group" key={group.date}>
+              <section
+                className={`day-group ${collapsedDates.has(group.date) ? "collapsed" : ""}`}
+                id={`family-day-${toDateAnchor(group.date)}`}
+                key={group.date}
+              >
                 <div className="day-group-header">
-                  <div>
+                  <button
+                    aria-expanded={!collapsedDates.has(group.date)}
+                    className="day-toggle"
+                    onClick={() => toggleDate(group.date)}
+                    type="button"
+                  >
+                    {collapsedDates.has(group.date) ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
                     <h3>{group.date}</h3>
-                  </div>
+                  </button>
                   <span>{group.items.length} 筆</span>
                 </div>
 
-                <div className="item-list compact-list">
-                  {group.items.map((item) => (
-                    <article
-                      className={`itinerary-card compact-card family-row family-${item.familyId} ${
-                        item.isFinal ? "final" : ""
-                      }`}
-                      key={item.id}
-                    >
-                      <div className="compact-time">
-                        <Clock3 size={15} />
-                        {formatTimeRange(item)}
-                      </div>
-
-                      <div className="compact-content">
-                        <div className="card-title">
-                          <h3>{item.title}</h3>
-                          <p>
-                            <MapPin size={14} />
-                            {renderLocation(item)}
-                          </p>
+                {!collapsedDates.has(group.date) ? (
+                  <div className="item-list compact-list">
+                    {group.items.map((item) => (
+                      <article
+                        className={`itinerary-card compact-card family-row family-${item.familyId} ${
+                          item.isFinal ? "final" : ""
+                        }`}
+                        key={item.id}
+                      >
+                        <div className="compact-time">
+                          <Clock3 size={15} />
+                          {formatTimeRange(item)}
                         </div>
 
-                        {item.description || item.notes ? (
-                          <p className="compact-note">{[item.description, item.notes].filter(Boolean).join(" / ")}</p>
-                        ) : null}
-                      </div>
+                        <div className="compact-content">
+                          <div className="card-title">
+                            <h3>{item.title}</h3>
+                            <p>
+                              <MapPin size={14} />
+                              {renderLocation(item)}
+                            </p>
+                          </div>
 
-                      <div className="compact-side">
-                        <span className="compact-cost">
-                          <DollarSign size={14} />
-                          {formatCost(item.estimatedCost)}
-                        </span>
-                        <button
-                          className={`button compact-final ${item.isFinal ? "secondary" : "primary"}`}
-                          onClick={() => toggleFinal(item)}
-                          type="button"
-                        >
-                          <CheckCircle2 size={18} />
-                          {item.isFinal ? "移出 final" : "加 final"}
-                        </button>
-                        <button
-                          className="button icon-only secondary"
-                          title="編輯"
-                          type="button"
-                          onClick={() => startEditing(item)}
-                        >
-                          <Edit3 size={17} />
-                        </button>
-                        <button
-                          className="button icon-only danger"
-                          title="刪除"
-                          type="button"
-                          onClick={() => removeItem(item)}
-                        >
-                          <Trash2 size={17} />
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                          {item.description || item.notes ? (
+                            <p className="compact-note">
+                              {[item.description, item.notes].filter(Boolean).join(" / ")}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="compact-side">
+                          <span className="compact-cost">
+                            <DollarSign size={14} />
+                            {formatCost(item.estimatedCost)}
+                          </span>
+                          <button
+                            className={`button compact-final ${item.isFinal ? "secondary" : "primary"}`}
+                            onClick={() => toggleFinal(item)}
+                            type="button"
+                          >
+                            <CheckCircle2 size={18} />
+                            {item.isFinal ? "移出 final" : "加 final"}
+                          </button>
+                          <button
+                            className="button icon-only secondary"
+                            title="編輯"
+                            type="button"
+                            onClick={() => startEditing(item)}
+                          >
+                            <Edit3 size={17} />
+                          </button>
+                          <button
+                            className="button icon-only danger"
+                            title="刪除"
+                            type="button"
+                            onClick={() => removeItem(item)}
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
               </section>
             ))}
           </div>
@@ -539,6 +608,15 @@ function groupByDate(items: ItineraryItem[]): DateGroup[] {
   }
 
   return Array.from(groups, ([date, groupedItems]) => ({ date, items: groupedItems }));
+}
+
+function toDateAnchor(date: string) {
+  return date.replaceAll("-", "");
+}
+
+function formatShortDate(date: string) {
+  const [, month, day] = date.split("-");
+  return `${Number(month)}/${Number(day)}`;
 }
 
 function renderLocation(item: ItineraryItem) {
