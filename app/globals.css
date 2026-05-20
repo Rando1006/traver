@@ -23,6 +23,12 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background:
@@ -55,6 +61,8 @@ a {
 .app-shell {
   min-height: 100vh;
   padding: 28px clamp(16px, 4vw, 48px) 56px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .family-theme-1 {
@@ -137,12 +145,14 @@ a {
   display: grid;
   grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
   gap: 22px;
+  width: 100%;
   max-width: 1180px;
   margin: 0 auto;
   align-items: start;
 }
 
 .panel {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.88);
@@ -221,6 +231,44 @@ a {
   padding: 18px;
 }
 
+.form-section {
+  min-width: 0;
+}
+
+.form-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: calc(100% - 36px);
+  min-height: 54px;
+  margin: 0 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--family-ink);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.form-toggle span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.form-toggle strong,
+.form-toggle small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-toggle small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -230,6 +278,7 @@ a {
 .field {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .field label {
@@ -241,6 +290,8 @@ a {
 .field input,
 .field textarea {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
@@ -290,6 +341,7 @@ a {
   border-radius: 8px;
   padding: 0 14px;
   font-weight: 800;
+  max-width: 100%;
 }
 
 .button.primary {
@@ -772,7 +824,7 @@ a {
   }
 
   .main-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .meta-grid {
@@ -799,7 +851,7 @@ a {
 
 @media (max-width: 620px) {
   .app-shell {
-    padding-inline: 12px;
+    padding: 16px 10px 36px;
   }
 
   .brand {
@@ -825,11 +877,36 @@ a {
   .family-tabs,
   .meta-grid,
   .timeline-item {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar {
+    margin-bottom: 14px;
+  }
+
+  .panel-header,
+  .form,
+  .list-toolbar,
+  .date-tools,
+  .day-list {
+    padding-inline: 12px;
+  }
+
+  .family-tabs {
+    padding-inline: 12px;
+  }
+
+  .form {
+    padding-top: 0;
+  }
+
+  .form-toggle {
+    width: calc(100% - 24px);
+    margin: 0 12px 12px;
   }
 
   .compact-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .compact-side {

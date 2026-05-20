@@ -82,6 +82,7 @@ export default function HomePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
+  const [isFormCollapsed, setIsFormCollapsed] = useState(true);
 
   const activeFamily = useMemo(
     () => families.find((family) => family.id === activeFamilyId) ?? null,
@@ -149,6 +150,7 @@ export default function HomePage() {
 
   function startEditing(item: ItineraryItem) {
     setEditingId(item.id);
+    setIsFormCollapsed(false);
     setForm({
       date: item.date,
       startTime: item.startTime?.slice(0, 5) ?? "",
@@ -167,6 +169,10 @@ export default function HomePage() {
   function resetForm() {
     setEditingId(null);
     setForm(emptyForm);
+  }
+
+  function toggleFormCollapsed() {
+    setIsFormCollapsed((current) => !current);
   }
 
   function toggleDate(date: string) {
@@ -322,6 +328,7 @@ export default function HomePage() {
                 onClick={() => {
                   setActiveFamilyId(family.id);
                   resetForm();
+                  setIsFormCollapsed(true);
                   setCollapsedDates(new Set());
                 }}
                 type="button"
@@ -331,129 +338,145 @@ export default function HomePage() {
             ))}
           </div>
 
-          <form className="form" onSubmit={handleSubmit}>
-            <section className="panel-header">
-              <h2>{editingId ? "編輯行程" : "新增行程"}</h2>
-              <p>{activeFamily ? `${activeFamily.name} 的候選行程` : "載入家庭資料中"}</p>
-            </section>
+          <section className="form-section">
+            <button
+              aria-expanded={!isFormCollapsed}
+              className="form-toggle"
+              onClick={toggleFormCollapsed}
+              type="button"
+            >
+              <span>
+                <strong>{editingId ? "編輯行程" : "新增行程"}</strong>
+                <small>{activeFamily ? `${activeFamily.name} 的候選行程` : "載入家庭資料中"}</small>
+              </span>
+              {isFormCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
+            </button>
 
-            {message ? <div className={`message ${message.type}`}>{message.text}</div> : null}
+            {!isFormCollapsed ? (
+              <form className="form" onSubmit={handleSubmit}>
+                {message ? <div className={`message ${message.type}`}>{message.text}</div> : null}
 
-            <div className="field-grid">
-              <div className="field">
-                <label htmlFor="date">日期</label>
-                <input
-                  id="date"
-                  required
-                  type="date"
-                  value={form.date}
-                  onChange={(event) => updateField("date", event.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="estimatedCost">預估費用</label>
-                <input
-                  id="estimatedCost"
-                  inputMode="decimal"
-                  min="0"
-                  placeholder="例如 1200"
-                  type="number"
-                  value={form.estimatedCost}
-                  onChange={(event) => updateField("estimatedCost", event.target.value)}
-                />
-              </div>
-            </div>
+                <div className="field-grid">
+                  <div className="field">
+                    <label htmlFor="date">日期</label>
+                    <input
+                      id="date"
+                      required
+                      type="date"
+                      value={form.date}
+                      onChange={(event) => updateField("date", event.target.value)}
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="estimatedCost">預估費用</label>
+                    <input
+                      id="estimatedCost"
+                      inputMode="decimal"
+                      min="0"
+                      placeholder="例如 1200"
+                      type="number"
+                      value={form.estimatedCost}
+                      onChange={(event) => updateField("estimatedCost", event.target.value)}
+                    />
+                  </div>
+                </div>
 
-            <div className="field-grid">
-              <div className="field">
-                <label htmlFor="startTime">開始時間</label>
-                <input
-                  id="startTime"
-                  type="time"
-                  value={form.startTime}
-                  onChange={(event) => updateField("startTime", event.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="endTime">結束時間</label>
-                <input
-                  id="endTime"
-                  type="time"
-                  value={form.endTime}
-                  onChange={(event) => updateField("endTime", event.target.value)}
-                />
-              </div>
-            </div>
+                <div className="field-grid">
+                  <div className="field">
+                    <label htmlFor="startTime">開始時間</label>
+                    <input
+                      id="startTime"
+                      type="time"
+                      value={form.startTime}
+                      onChange={(event) => updateField("startTime", event.target.value)}
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="endTime">結束時間</label>
+                    <input
+                      id="endTime"
+                      type="time"
+                      value={form.endTime}
+                      onChange={(event) => updateField("endTime", event.target.value)}
+                    />
+                  </div>
+                </div>
 
-            <div className="field">
-              <label htmlFor="title">活動名稱</label>
-              <input
-                id="title"
-                maxLength={160}
-                required
-                value={form.title}
-                onChange={(event) => updateField("title", event.target.value)}
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="title">活動名稱</label>
+                  <input
+                    id="title"
+                    maxLength={160}
+                    required
+                    value={form.title}
+                    onChange={(event) => updateField("title", event.target.value)}
+                  />
+                </div>
 
-            <div className="field">
-              <label htmlFor="location">地點</label>
-              <input
-                id="location"
-                maxLength={180}
-                required
-                value={form.location}
-                onChange={(event) => updateField("location", event.target.value)}
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="location">地點</label>
+                  <input
+                    id="location"
+                    maxLength={180}
+                    required
+                    value={form.location}
+                    onChange={(event) => updateField("location", event.target.value)}
+                  />
+                </div>
 
-            <div className="field">
-              <label htmlFor="mapUrl">Google Map 連結</label>
-              <input
-                id="mapUrl"
-                placeholder="https://maps.app.goo.gl/..."
-                type="url"
-                value={form.mapUrl}
-                onChange={(event) => updateField("mapUrl", event.target.value)}
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="mapUrl">Google Map 連結</label>
+                  <input
+                    id="mapUrl"
+                    placeholder="https://maps.app.goo.gl/..."
+                    type="url"
+                    value={form.mapUrl}
+                    onChange={(event) => updateField("mapUrl", event.target.value)}
+                  />
+                </div>
 
-            <div className="field">
-              <label htmlFor="description">活動說明</label>
-              <textarea
-                id="description"
-                value={form.description}
-                onChange={(event) => updateField("description", event.target.value)}
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="description">活動說明</label>
+                  <textarea
+                    id="description"
+                    value={form.description}
+                    onChange={(event) => updateField("description", event.target.value)}
+                  />
+                </div>
 
-            <div className="field">
-              <label htmlFor="notes">備註</label>
-              <textarea id="notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} />
-            </div>
+                <div className="field">
+                  <label htmlFor="notes">備註</label>
+                  <textarea
+                    id="notes"
+                    value={form.notes}
+                    onChange={(event) => updateField("notes", event.target.value)}
+                  />
+                </div>
 
-            <label className="checkbox-row">
-              <input
-                checked={form.isFinal}
-                type="checkbox"
-                onChange={(event) => updateField("isFinal", event.target.checked)}
-              />
-              直接加入 final 行程
-            </label>
+                <label className="checkbox-row">
+                  <input
+                    checked={form.isFinal}
+                    type="checkbox"
+                    onChange={(event) => updateField("isFinal", event.target.checked)}
+                  />
+                  直接加入 final 行程
+                </label>
 
-            <div className="button-row">
-              <button className="button primary" disabled={isSaving || !activeFamilyId} type="submit">
-                <FilePlus2 size={18} />
-                {isSaving ? "儲存中" : editingId ? "更新行程" : "新增行程"}
-              </button>
-              {editingId ? (
-                <button className="button secondary" onClick={resetForm} type="button">
-                  <X size={18} />
-                  取消
-                </button>
-              ) : null}
-            </div>
-          </form>
+                <div className="button-row">
+                  <button className="button primary" disabled={isSaving || !activeFamilyId} type="submit">
+                    <FilePlus2 size={18} />
+                    {isSaving ? "儲存中" : editingId ? "更新行程" : "新增行程"}
+                  </button>
+                  {editingId ? (
+                    <button className="button secondary" onClick={resetForm} type="button">
+                      <X size={18} />
+                      取消
+                    </button>
+                  ) : null}
+                </div>
+              </form>
+            ) : null}
+          </section>
         </aside>
 
         <section className="panel list-panel">
