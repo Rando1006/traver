@@ -1,8 +1,20 @@
 "use client";
 
-import { ArrowLeft, ChevronDown, ChevronRight, Clock3, DollarSign, ExternalLink, Flag, MapPin, Plane } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  Clock3,
+  DollarSign,
+  ExternalLink,
+  Flag,
+  MapPin,
+  Plane,
+  X,
+} from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type FinalItem = {
   id: number;
@@ -29,6 +41,7 @@ export default function FinalPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<FinalItem | null>(null);
   const groupedItems = useMemo(() => groupByDate(items), [items]);
 
   useEffect(() => {
@@ -55,6 +68,28 @@ export default function FinalPage() {
 
     loadFinal();
   }, []);
+
+  useEffect(() => {
+    if (!selectedItem) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+
+    function closeOnEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSelectedItem(null);
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [selectedItem]);
 
   function toggleDate(date: string) {
     setCollapsedDates((current) => {
@@ -83,6 +118,21 @@ export default function FinalPage() {
       behavior: "smooth",
       block: "start",
     });
+  }
+
+  function openItemDetails(item: FinalItem) {
+    setSelectedItem(item);
+  }
+
+  function handleCardKeyDown(event: KeyboardEvent<HTMLElement>, item: FinalItem) {
+    if (event.currentTarget !== event.target) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openItemDetails(item);
+    }
   }
 
   return (
@@ -172,7 +222,15 @@ export default function FinalPage() {
               {!collapsedDates.has(group.date) ? (
                 <div className="timeline">
                   {group.items.map((item) => (
-                    <article className={`timeline-item compact-card family-row family-${item.familyId}`} key={item.id}>
+                    <article
+                      className={`timeline-item compact-card family-row family-${item.familyId}`}
+                      key={item.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`查看 ${item.title} 詳細內容`}
+                      onClick={() => openItemDetails(item)}
+                      onKeyDown={(event) => handleCardKeyDown(event, item)}
+                    >
                       <div className="timeline-time">
                         <Clock3 size={16} />
                         {formatTimeRange(item)}
@@ -204,7 +262,128 @@ export default function FinalPage() {
           ))}
         </div>
       </section>
+      {selectedItem ? <FinalDetailDialog item={selectedItem} onClose={() => setSelectedItem(null)} /> : null}
     </main>
+  );
+}
+
+function FinalDetailDialog({ item, onClose }: { item: FinalItem; onClose: () => void }) {
+  const dialogRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const firstFocusable = getFocusableElements(dialogRef.current)[0];
+    firstFocusable?.focus();
+  }, []);
+
+  function keepFocusInside(event: KeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") {
+      return;
+    }
+
+    const focusableElements = getFocusableElements(dialogRef.current);
+
+    if (focusableElements.length === 0) {
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey && document.activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && document.activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
+  }
+
+  return (
+    <div className="detail-overlay" onMouseDown={onClose}>
+      <section
+        ref={dialogRef}
+        aria-labelledby={`final-detail-title-${item.id}`}
+        aria-modal="true"
+        className={`detail-dialog family-row family-${item.familyId}`}
+        role="dialog"
+        onKeyDown={keepFocusInside}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="detail-header">
+          <div>
+            <span className="detail-kicker">{item.familyName}</span>
+            <h2 id={`final-detail-title-${item.id}`}>{item.title}</h2>
+          </div>
+          <button className="button icon-only secondary" aria-label="關閉詳情" onClick={onClose} type="button">
+            <X size={18} />
+          </button>
+        </header>
+
+        <div className="detail-body">
+          <div className="detail-meta-grid">
+            <div className="meta">
+              <CalendarDays size={16} />
+              {item.date}
+            </div>
+            <div className="meta">
+              <Clock3 size={16} />
+              {formatTimeRange(item)}
+            </div>
+            <div className="meta">
+              <DollarSign size={16} />
+              {formatCost(item.estimatedCost)}
+            </div>
+            <div className="meta">
+              <Flag size={16} />
+              已加入 final
+            </div>
+          </div>
+
+          <section className="detail-section">
+            <h3>地點</h3>
+            {item.mapUrl ? (
+              <a className="inline-link" href={item.mapUrl} rel="noreferrer" target="_blank">
+                {item.location}
+                <ExternalLink size={14} />
+              </a>
+            ) : (
+              <p>{item.location || "未填寫"}</p>
+            )}
+          </section>
+
+          <section className="detail-section">
+            <h3>行程內容</h3>
+            <p>{item.description || "未填寫"}</p>
+          </section>
+
+          <section className="detail-section">
+            <h3>備註</h3>
+            <p>{item.notes || "未填寫"}</p>
+          </section>
+        </div>
+
+        <footer className="detail-actions">
+          <button className="button secondary" onClick={onClose} type="button">
+            關閉
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function getFocusableElements(container: HTMLElement | null) {
+  if (!container) {
+    return [];
+  }
+
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
   );
 }
 
@@ -235,7 +414,13 @@ function renderLocation(item: FinalItem) {
   }
 
   return (
-    <a className="inline-link" href={item.mapUrl} rel="noreferrer" target="_blank">
+    <a
+      className="inline-link"
+      href={item.mapUrl}
+      rel="noreferrer"
+      target="_blank"
+      onClick={(event) => event.stopPropagation()}
+    >
       {item.location}
       <ExternalLink size={13} />
     </a>

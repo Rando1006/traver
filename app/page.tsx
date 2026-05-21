@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Family = {
   id: number;
@@ -83,6 +83,7 @@ export default function HomePage() {
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
   const [isFormCollapsed, setIsFormCollapsed] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
 
   const activeFamily = useMemo(
     () => families.find((family) => family.id === activeFamilyId) ?? null,
@@ -123,6 +124,28 @@ export default function HomePage() {
     loadItems(activeFamilyId);
   }, [activeFamilyId]);
 
+  useEffect(() => {
+    if (!selectedItem) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+
+    function closeOnEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSelectedItem(null);
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [selectedItem]);
+
   async function loadItems(familyId: number) {
     setIsLoading(true);
     setMessage(null);
@@ -150,6 +173,7 @@ export default function HomePage() {
 
   function startEditing(item: ItineraryItem) {
     setEditingId(item.id);
+    setSelectedItem(null);
     setIsFormCollapsed(false);
     setForm({
       date: item.date,
@@ -202,6 +226,21 @@ export default function HomePage() {
       behavior: "smooth",
       block: "start",
     });
+  }
+
+  function openItemDetails(item: ItineraryItem) {
+    setSelectedItem(item);
+  }
+
+  function handleCardKeyDown(event: KeyboardEvent<HTMLElement>, item: ItineraryItem) {
+    if (event.currentTarget !== event.target) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openItemDetails(item);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -262,6 +301,7 @@ export default function HomePage() {
       }
 
       setItems((current) => current.map((row) => (row.id === item.id ? payload : row)));
+      setSelectedItem((current) => (current?.id === item.id ? payload : current));
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "更新 final 狀態失敗" });
     }
@@ -285,6 +325,7 @@ export default function HomePage() {
       }
 
       setItems((current) => current.filter((row) => row.id !== item.id));
+      setSelectedItem((current) => (current?.id === item.id ? null : current));
       if (editingId === item.id) {
         resetForm();
       }
@@ -556,6 +597,11 @@ export default function HomePage() {
                           item.isFinal ? "final" : ""
                         }`}
                         key={item.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`查看 ${item.title} 詳細內容`}
+                        onClick={() => openItemDetails(item)}
+                        onKeyDown={(event) => handleCardKeyDown(event, item)}
                       >
                         <div className="compact-time">
                           <Clock3 size={15} />
@@ -578,7 +624,7 @@ export default function HomePage() {
                           ) : null}
                         </div>
 
-                        <div className="compact-side">
+                        <div className="compact-side" onClick={(event) => event.stopPropagation()}>
                           <span className="compact-cost">
                             <DollarSign size={14} />
                             {formatCost(item.estimatedCost)}
@@ -617,7 +663,156 @@ export default function HomePage() {
           </div>
         </section>
       </div>
+      {selectedItem ? (
+        <ItineraryDetailDialog
+          familyName={activeFamily?.name ?? ""}
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onEdit={() => startEditing(selectedItem)}
+          onToggleFinal={() => toggleFinal(selectedItem)}
+        />
+      ) : null}
     </main>
+  );
+}
+
+function ItineraryDetailDialog({
+  familyName,
+  item,
+  onClose,
+  onEdit,
+  onToggleFinal,
+}: {
+  familyName: string;
+  item: ItineraryItem;
+  onClose: () => void;
+  onEdit: () => void;
+  onToggleFinal: () => void;
+}) {
+  const dialogRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const firstFocusable = getFocusableElements(dialogRef.current)[0];
+    firstFocusable?.focus();
+  }, []);
+
+  function keepFocusInside(event: KeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") {
+      return;
+    }
+
+    const focusableElements = getFocusableElements(dialogRef.current);
+
+    if (focusableElements.length === 0) {
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey && document.activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && document.activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
+  }
+
+  return (
+    <div className="detail-overlay" onMouseDown={onClose}>
+      <section
+        ref={dialogRef}
+        aria-labelledby={`itinerary-detail-title-${item.id}`}
+        aria-modal="true"
+        className={`detail-dialog family-row family-${item.familyId}`}
+        role="dialog"
+        onKeyDown={keepFocusInside}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="detail-header">
+          <div>
+            <span className="detail-kicker">{familyName || "家庭行程"}</span>
+            <h2 id={`itinerary-detail-title-${item.id}`}>{item.title}</h2>
+          </div>
+          <button className="button icon-only secondary" aria-label="關閉詳情" onClick={onClose} type="button">
+            <X size={18} />
+          </button>
+        </header>
+
+        <div className="detail-body">
+          <div className="detail-meta-grid">
+            <div className="meta">
+              <CalendarDays size={16} />
+              {item.date}
+            </div>
+            <div className="meta">
+              <Clock3 size={16} />
+              {formatTimeRange(item)}
+            </div>
+            <div className="meta">
+              <DollarSign size={16} />
+              {formatCost(item.estimatedCost)}
+            </div>
+            <div className="meta">
+              <Flag size={16} />
+              {item.isFinal ? "已加入 final" : "候選行程"}
+            </div>
+          </div>
+
+          <section className="detail-section">
+            <h3>地點</h3>
+            {item.mapUrl ? (
+              <a className="inline-link" href={item.mapUrl} rel="noreferrer" target="_blank">
+                {item.location}
+                <ExternalLink size={14} />
+              </a>
+            ) : (
+              <p>{item.location || "未填寫"}</p>
+            )}
+          </section>
+
+          <section className="detail-section">
+            <h3>行程內容</h3>
+            <p>{item.description || "未填寫"}</p>
+          </section>
+
+          <section className="detail-section">
+            <h3>備註</h3>
+            <p>{item.notes || "未填寫"}</p>
+          </section>
+        </div>
+
+        <footer className="detail-actions">
+          <button className={`button ${item.isFinal ? "secondary" : "primary"}`} onClick={onToggleFinal} type="button">
+            <CheckCircle2 size={18} />
+            {item.isFinal ? "移出 final" : "加入 final"}
+          </button>
+          <button className="button secondary" onClick={onEdit} type="button">
+            <Edit3 size={18} />
+            編輯
+          </button>
+          <button className="button secondary" onClick={onClose} type="button">
+            關閉
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
+function getFocusableElements(container: HTMLElement | null) {
+  if (!container) {
+    return [];
+  }
+
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
   );
 }
 
@@ -648,7 +843,13 @@ function renderLocation(item: ItineraryItem) {
   }
 
   return (
-    <a className="inline-link" href={item.mapUrl} rel="noreferrer" target="_blank">
+    <a
+      className="inline-link"
+      href={item.mapUrl}
+      rel="noreferrer"
+      target="_blank"
+      onClick={(event) => event.stopPropagation()}
+    >
       {item.location}
       <ExternalLink size={13} />
     </a>
