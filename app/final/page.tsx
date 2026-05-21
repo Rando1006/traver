@@ -16,6 +16,8 @@ import {
 import Link from "next/link";
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { renderLinkedText } from "@/lib/linkify";
+
 type FinalItem = {
   id: number;
   familyId: number;
@@ -251,7 +253,9 @@ export default function FinalPage() {
                           </span>
                         </div>
                         {item.description || item.notes ? (
-                          <p className="compact-note">{[item.description, item.notes].filter(Boolean).join(" / ")}</p>
+                          <p className="compact-note">
+                            {renderLinkedText([item.description, item.notes].filter(Boolean).join(" / "))}
+                          </p>
                         ) : null}
                       </div>
                     </article>
@@ -356,12 +360,12 @@ function FinalDetailDialog({ item, onClose }: { item: FinalItem; onClose: () => 
 
           <section className="detail-section">
             <h3>行程內容</h3>
-            <p>{item.description || "未填寫"}</p>
+            <p>{renderLinkedText(item.description)}</p>
           </section>
 
           <section className="detail-section">
             <h3>備註</h3>
-            <p>{item.notes || "未填寫"}</p>
+            <p>{renderLinkedText(item.notes)}</p>
           </section>
         </div>
 

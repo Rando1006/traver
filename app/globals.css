@@ -647,6 +647,17 @@ a {
   text-decoration: underline;
 }
 
+.text-link {
+  color: var(--primary);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.text-link:hover {
+  color: var(--primary-dark);
+}
+
 .card-actions {
   display: flex;
   flex: 0 0 auto;

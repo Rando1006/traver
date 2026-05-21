@@ -19,6 +19,8 @@ import {
 import Link from "next/link";
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { renderLinkedText } from "@/lib/linkify";
+
 type Family = {
   id: number;
   name: string;
@@ -619,7 +621,7 @@ export default function HomePage() {
 
                           {item.description || item.notes ? (
                             <p className="compact-note">
-                              {[item.description, item.notes].filter(Boolean).join(" / ")}
+                              {renderLinkedText([item.description, item.notes].filter(Boolean).join(" / "))}
                             </p>
                           ) : null}
                         </div>
@@ -777,12 +779,12 @@ function ItineraryDetailDialog({
 
           <section className="detail-section">
             <h3>行程內容</h3>
-            <p>{item.description || "未填寫"}</p>
+            <p>{renderLinkedText(item.description)}</p>
           </section>
 
           <section className="detail-section">
             <h3>備註</h3>
-            <p>{item.notes || "未填寫"}</p>
+            <p>{renderLinkedText(item.notes)}</p>
           </section>
         </div>
 
